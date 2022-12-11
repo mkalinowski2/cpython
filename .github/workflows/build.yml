@@ -164,10 +164,9 @@ jobs:
       with:
         name: python-windows-x86
         path: |
-            build
+            PCbuild
             Include
             Lib
-            libpython*
   build_win_amd64:
     name: 'Windows (x64)'
     runs-on: windows-latest
@@ -191,7 +190,7 @@ jobs:
       with:
         name: python-windows-x64
         path: |
-            build
+            PCbuild
             Include
             Lib
             libpython*
@@ -216,8 +215,6 @@ jobs:
       run: make pythoninfo
     - name: Tests
       run: make buildbottest TESTOPTS="-j4 -uall,-cpu"
-    - name: Install CPython
-      run: make install -j4
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -283,8 +280,6 @@ jobs:
     - name: Tests
       working-directory: ${{ env.CPYTHON_BUILDDIR }}
       run: xvfb-run make buildbottest TESTOPTS="-j4 -uall,-cpu"
-    - name: Install CPython
-      run: make install -j4
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
