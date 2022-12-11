@@ -153,18 +153,16 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build CPython
-      run: .\PCbuild\build.bat -e -d -p Win32
+      run: .\PCbuild\build.bat -e -p Win32
       timeout-minutes: 30
     - name: Display build info
       run: .\python.bat -m test.pythoninfo
-    - name: Tests
-      run: .\PCbuild\rt.bat -p Win32 -d -q -uall -u-cpu -rwW --slowest --timeout=1200 -j0
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: python-windows-x86
         path: |
-            PCbuild
+            PCbuild/win32
             Include
             Lib
   build_win_amd64:
@@ -179,21 +177,18 @@ jobs:
     - name: Register MSVC problem matcher
       run: echo "::add-matcher::.github/problem-matchers/msvc.json"
     - name: Build CPython
-      run: .\PCbuild\build.bat -e -d -p x64
+      run: .\PCbuild\build.bat -e -p x64
       timeout-minutes: 30
     - name: Display build info
       run: .\python.bat -m test.pythoninfo
-    - name: Tests
-      run: .\PCbuild\rt.bat -p x64 -d -q -uall -u-cpu -rwW --slowest --timeout=1200 -j0
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: python-windows-x64
         path: |
-            PCbuild
+            PCbuild/amd64
             Include
             Lib
-            libpython*
   build_macos:
     name: 'macOS'
     runs-on: macos-latest
@@ -208,13 +203,11 @@ jobs:
         echo "LDFLAGS=-L$(brew --prefix tcl-tk)/lib" >> $GITHUB_ENV
         echo "PKG_CONFIG_PATH=$(brew --prefix openssl@1.1)/lib/pkgconfig:$(brew --prefix tcl-tk)/lib/pkgconfig" >> $GITHUB_ENV
     - name: Configure CPython
-      run: ./configure --with-pydebug --prefix=/opt/python-dev
+      run: ./configure --enable-shared --enable-optimizations
     - name: Build CPython
       run: make -j4
     - name: Display build info
       run: make pythoninfo
-    - name: Tests
-      run: make buildbottest TESTOPTS="-j4 -uall,-cpu"
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -223,7 +216,10 @@ jobs:
             build
             Include
             Lib
-            libpython*
+            python
+            libpython3.dylib
+            libpython3.11.dylib
+            libpython3.11.dylib.1.0
   build_ubuntu:
     name: 'Ubuntu'
     runs-on: ubuntu-20.04
@@ -238,48 +234,13 @@ jobs:
       run: echo "::add-matcher::.github/problem-matchers/gcc.json"
     - name: Install Dependencies
       run: sudo ./.github/workflows/posix-deps-apt.sh
-    - name: Configure OpenSSL env vars
-      run: |
-        echo "MULTISSL_DIR=${GITHUB_WORKSPACE}/multissl" >> $GITHUB_ENV
-        echo "OPENSSL_DIR=${GITHUB_WORKSPACE}/multissl/openssl/${OPENSSL_VER}" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/multissl/openssl/${OPENSSL_VER}/lib" >> $GITHUB_ENV
-    - name: 'Restore OpenSSL build'
-      id: cache-openssl
-      uses: actions/cache@v3
-      with:
-        path: ./multissl/openssl/${{ env.OPENSSL_VER }}
-        key: ${{ runner.os }}-multissl-openssl-${{ env.OPENSSL_VER }}
-    - name: Install OpenSSL
-      if: steps.cache-openssl.outputs.cache-hit != 'true'
-      run: python3 Tools/ssl/multissltests.py --steps=library --base-directory $MULTISSL_DIR --openssl $OPENSSL_VER --system Linux
-    - name: Add ccache to PATH
-      run: |
-        echo "PATH=/usr/lib/ccache:$PATH" >> $GITHUB_ENV
-    - name: Configure ccache action
-      uses: hendrikmuhs/ccache-action@v1.2
-    - name: Setup directory envs for out-of-tree builds
-      run: |
-        echo "CPYTHON_RO_SRCDIR=$(realpath -m ${GITHUB_WORKSPACE}/../cpython-ro-srcdir)" >> $GITHUB_ENV
-        echo "CPYTHON_BUILDDIR=$(realpath -m ${GITHUB_WORKSPACE}/../cpython-builddir)" >> $GITHUB_ENV
-    - name: Create directories for read-only out-of-tree builds
-      run: mkdir -p $CPYTHON_RO_SRCDIR $CPYTHON_BUILDDIR
-    - name: Bind mount sources read-only
-      run: sudo mount --bind -o ro $GITHUB_WORKSPACE $CPYTHON_RO_SRCDIR
-    - name: Configure CPython out-of-tree
-      working-directory: ${{ env.CPYTHON_BUILDDIR }}
-      run: ../cpython-ro-srcdir/configure --with-pydebug --with-openssl=$OPENSSL_DIR
-    - name: Build CPython out-of-tree
-      working-directory: ${{ env.CPYTHON_BUILDDIR }}
+    - name: Configure CPython
+      run: ./configure --enable-shared --enable-optimizations
+    - name: Build CPython
       run: make -j4
     - name: Display build info
       working-directory: ${{ env.CPYTHON_BUILDDIR }}
       run: make pythoninfo
-    - name: Remount sources writable for tests
-      # some tests write to srcdir, lack of pyc files slows down testing
-      run: sudo mount $CPYTHON_RO_SRCDIR -oremount,rw
-    - name: Tests
-      working-directory: ${{ env.CPYTHON_BUILDDIR }}
-      run: xvfb-run make buildbottest TESTOPTS="-j4 -uall,-cpu"
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -288,4 +249,7 @@ jobs:
             build
             Include
             Lib
-            libpython*
+            python
+            libpython3.so
+            libpython3.11.so
+            libpython3.11.so.1.0
