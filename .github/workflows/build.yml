@@ -216,7 +216,7 @@ jobs:
             build
             Include
             Lib
-            python
+            python3
             libpython3.dylib
             libpython3.11.dylib
             libpython3.11.dylib.1.0
