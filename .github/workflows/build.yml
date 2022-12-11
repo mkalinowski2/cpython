@@ -163,6 +163,7 @@ jobs:
         name: python-windows-x86
         path: |
             PCbuild/win32
+            pyconfig.h
             Include
             Lib
   build_win_amd64:
@@ -187,6 +188,7 @@ jobs:
         name: python-windows-x64
         path: |
             PCbuild/amd64
+            pyconfig.h
             Include
             Lib
   build_macos:
@@ -217,6 +219,7 @@ jobs:
             Include
             Lib
             python3
+            pyconfig.h
             libpython3.dylib
             libpython3.11.dylib
             libpython3.11.dylib.1.0
@@ -250,6 +253,7 @@ jobs:
             Include
             Lib
             python
+            pyconfig.h
             libpython3.so
             libpython3.11.so
             libpython3.11.so.1.0
