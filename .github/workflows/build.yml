@@ -163,7 +163,7 @@ jobs:
         name: python-windows-x86
         path: |
             PCbuild/win32
-            pyconfig.h
+            PC/pyconfig.h
             Include
             Lib
   build_win_amd64:
@@ -188,7 +188,7 @@ jobs:
         name: python-windows-x64
         path: |
             PCbuild/amd64
-            pyconfig.h
+            PC/pyconfig.h
             Include
             Lib
   build_macos:
